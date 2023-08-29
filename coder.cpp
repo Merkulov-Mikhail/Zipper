@@ -31,8 +31,8 @@ struct Node* encodeLZ77(const char* str){
     assert(res != NULL);
 
     int pos = 0;
+    struct StringPosition match;
     while ( str[pos] ){
-        struct StringPosition match;
         findPrefix(window, str + pos, &match, min(pos, WINDOW_SIZE));
         // ABCDEFGHLABCDAABCD
         pos += match.length;
@@ -78,7 +78,7 @@ void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos
     // curr - current possible prefix
 
     char curr[WINDOW_SIZE] = "";
-    char *correctHaystack = (char*) malloc(n * sizeof(char));
+    char *correctHaystack = (char*) calloc(n + 1, sizeof(char));
 
     // haystack and needle is just a pointer to a position in initial string
     // so not to break anything, it's necessery to limit haystack from above
