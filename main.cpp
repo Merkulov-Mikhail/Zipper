@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 
 #include "coder.h"
 
 
-int main(){
+int main(int argc, char* argv[]){
     struct Node* result = encodeLZ77("ABCDEFGHLABCDAABCD");
-    for ( int i = 0; result[i].next; i++ ){
-        printf("%d, %d, %c\n", result[i].position->offset, result[i].position->length, result[i].next);
-    }
+    printf("ABCDEFGHLABCDAABCD\n");
+    printf("%s\n", decodeLZ77(result));
+    free(result);
 }

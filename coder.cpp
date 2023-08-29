@@ -10,10 +10,39 @@
 #define START_SIZE 200
 #define min(a, b) a < b ? a : b
 
-// abababababababbababababababa
-// abababababababbababababababaabababababababbababababababaabababababababbababababababa
 
+char* decodeLZ77(const struct Node* arr){
 
+    assert(arr);
+
+    int resSize = START_SIZE;
+
+    char* res = nullptr;
+    res = (char*) realloc(res, resSize * sizeof(char));
+
+    int used = 0;
+
+    for ( int i = 0; ; i++ ){
+        Node currentNode = arr[i];
+        int offset = currentNode.position.offset;
+        int length = currentNode.position.length;
+        char ch = currentNode.next;
+        if (currentNode.position.offset){
+            if ( used + length >= resSize){
+                resSize *= 2;
+                res = (char*) realloc(res, resSize * sizeof(char));
+            }
+            strncpy(res + used, res + used - offset, length);
+            used += length;
+        }
+        res[used] = ch;
+        used += 1;
+        if (arr[i].next == 0)
+            break;
+    }
+
+    return res;
+}
 
 struct Node* encodeLZ77(const char* str){
 
@@ -32,9 +61,9 @@ struct Node* encodeLZ77(const char* str){
 
     int pos = 0;
     struct StringPosition match;
+
     while ( str[pos] ){
         findPrefix(window, str + pos, &match, min(pos, WINDOW_SIZE));
-        // ABCDEFGHLABCDAABCD
         pos += match.length;
 
         // move buffer
@@ -46,11 +75,10 @@ struct Node* encodeLZ77(const char* str){
         }
 
         Node newNode = {};
-        newNode.position = &match;
+        newNode.position = match;
         newNode.next = str[pos];
 
         res[used] = newNode;
-        printf("NEW NODE\n%d, %d, %d\n", res[used].position->offset, res[used].position->length, res[used].next);
         used++;
 
         // if result array is full, multiply its size by 2
@@ -93,10 +121,12 @@ void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos
         // if there is no prefix in correctHaystack, further prefixes wont be found either
         // so just return
         if (ptr == NULL){
+            free(correctHaystack);
             return;
         }
         // offset counts from backwards, so n - (ptr - correctHay)
         StrPos->offset = n - (ptr - correctHaystack);
         StrPos->length = i;
     }
+    free(correctHaystack);
 }

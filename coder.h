@@ -12,7 +12,7 @@ struct StringPosition
 */
 struct Node
 {
-    struct StringPosition* position;
+    struct StringPosition position;
     char next;
 };
 
@@ -21,9 +21,19 @@ struct Node
 
     @param[in] str -> Строка, которую необходимо сжать
 
-    @return массив указателей на структуру \ref Node.
+    @return массив указателей на структуру \ref Node. Память под массив выделяется calloc'ом, не забыть free()!!
 
 */
 struct Node* encodeLZ77(const char* str);
+
+/*!
+    Функция формирования исходной строки из сжатой по алгоритму LZ77
+
+    @param[in] arr -> Массив, представляющий сжатую строку
+
+    @return исходная строка. Память под массив выделяется calloc'ом, не забыть free()!!
+
+*/
+char* decodeLZ77(const struct Node* arr);
 
 void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos, int n);
