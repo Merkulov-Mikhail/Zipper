@@ -17,26 +17,36 @@ char* decodeLZ77(const struct Node* arr){
 
     int resSize = START_SIZE;
 
-    char* res = nullptr;
-    res = (char*) realloc(res, resSize * sizeof(char));
+    // res - initial string, that would be uncompressed from arr
+    char* res = (char*) calloc(resSize, sizeof(char));
+    if ( !res )
+        return nullptr;
 
-    int used = 0;
+    // pointer to the last symbol in res
+    int pos = 0;
 
     for ( int i = 0; ; i++ ){
-        Node currentNode = arr[i];
-        int offset = currentNode.position.offset;
-        int length = currentNode.position.length;
-        char ch = currentNode.next;
-        if (currentNode.position.offset){
-            if ( used + length >= resSize){
-                resSize *= 2;
-                res = (char*) realloc(res, resSize * sizeof(char));
-            }
-            strncpy(res + used, res + used - offset, length);
-            used += length;
+        const Node* currentNode = arr + i;
+
+        int offset = currentNode->position.offset;
+        int length = currentNode->position.length;
+        char ch = currentNode->next;
+
+        if (offset){
+            // if we can not fit length symbols in res string, multiply its size by 2
+
+            void* status = relocateArray((void*) res, &resSize, pos + length, sizeof(char));
+            if (!status)
+                return nullptr;
+            else
+                res = (char*) status;
+
+            strncpy(res + pos, res + pos - offset, length);
+            pos += length;
         }
-        res[used] = ch;
-        used += 1;
+
+        res[pos] = ch;
+        pos += 1;
         if (arr[i].next == 0)
             break;
     }
@@ -52,27 +62,23 @@ struct Node* encodeLZ77(const char* str){
     const char *window = str;
     struct Node *res = nullptr;
 
-    int used = 0;
+    int pos = 0;
     int resSize = START_SIZE;
 
     // result array. Will always multiply its size by 2 until '\0' is met in str
-    res = (Node*) realloc(res, resSize * sizeof(Node));
+    res = (Node*) calloc(resSize, sizeof(Node));
+
+    if( !res )
+        return nullptr;
+
     assert(res != NULL);
 
-    int pos = 0;
-    struct StringPosition match;
+    int used = 0;
+    struct StringPosition match = {};
 
     while ( str[pos] ){
         findPrefix(window, str + pos, &match, min(pos, WINDOW_SIZE));
         pos += match.length;
-
-        // move buffer
-        if (pos > WINDOW_SIZE){
-            if (pos - WINDOW_SIZE < match.length)
-                window += pos - WINDOW_SIZE;
-            else
-                window += match.length;
-        }
 
         Node newNode = {};
         newNode.position = match;
@@ -80,14 +86,18 @@ struct Node* encodeLZ77(const char* str){
 
         res[used] = newNode;
         used++;
+        // move buffer
+        if (pos > WINDOW_SIZE)
+            window = str + pos - WINDOW_SIZE + 1;
 
         // if result array is full, multiply its size by 2
-        if (used == resSize){
 
-            resSize *= 2;
-            res = (Node*) realloc(res, resSize * sizeof(Node));
-            assert(res != NULL);
-        }
+        void* status = relocateArray((void*) res, &resSize, pos, sizeof(Node));
+
+        if (!status)
+            return nullptr;
+        else
+            res = (Node*) status;
         if (str[pos])
             pos++;
     }
@@ -116,7 +126,6 @@ void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos
         // copies first i elements to curr
         // needed to correctly find length of prefix
         strncpy(curr, needle, i);
-
         char *ptr = strstr(correctHaystack, curr);
         // if there is no prefix in correctHaystack, further prefixes wont be found either
         // so just return
@@ -127,6 +136,22 @@ void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos
         // offset counts from backwards, so n - (ptr - correctHay)
         StrPos->offset = n - (ptr - correctHaystack);
         StrPos->length = i;
+
     }
     free(correctHaystack);
+}
+
+
+void* relocateArray(void* array, int *size, int newSize, int elSize){
+
+    if ( newSize < *size )
+        return array;
+
+    *size *= 2;
+    void* ptr = realloc(array, *size * elSize);
+
+    if (!ptr)
+        free(array);
+
+    return ptr;
 }

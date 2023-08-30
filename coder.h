@@ -21,7 +21,7 @@ struct Node
 
     @param[in] str -> Строка, которую необходимо сжать
 
-    @return массив указателей на структуру \ref Node. Память под массив выделяется calloc'ом, не забыть free()!!
+    @return массив указателей на структуру \ref Node. Память под массив выделяется realloc'ом, не забыть free()!!
 
 */
 struct Node* encodeLZ77(const char* str);
@@ -31,9 +31,10 @@ struct Node* encodeLZ77(const char* str);
 
     @param[in] arr -> Массив, представляющий сжатую строку
 
-    @return исходная строка. Память под массив выделяется calloc'ом, не забыть free()!!
+    @return исходная строка. Память под массив выделяется realloc'ом, не забыть free()!!
 
 */
 char* decodeLZ77(const struct Node* arr);
 
 void findPrefix(const char* haystack, const char* needle, StringPosition* StrPos, int n);
+void* relocateArray(void* array, int *size, int newSize, int elSize);
